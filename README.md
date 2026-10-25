@@ -22,6 +22,30 @@ npm install
 npm run dev
 ```
 
+### Windows (PowerShell)
+
+Needs Python 3.12+ (`python --version`) and Node 22+ (`node --version`). Open **two** PowerShell windows in the repo folder.
+
+```powershell
+# Window 1: backend on http://localhost:8000
+cd backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000
+```
+
+```powershell
+# Window 2: frontend on http://localhost:3000
+cd frontend
+npm install
+npm run dev
+```
+
+(Calling the venv's `python.exe` directly means you never have to activate it, so PowerShell's
+script-execution policy does not get in the way.)
+
+Tests on Windows: `cd backend; .\.venv\Scripts\python.exe -m pytest -q` and `cd frontend; npm test`.
+
 Open http://localhost:3000. API docs: http://localhost:8000/docs.
 The frontend still works if the backend is down (it ranks with a built-in copy of the scorer and says so),
 but Wildcard needs the backend.
