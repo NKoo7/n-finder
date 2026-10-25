@@ -1,31 +1,33 @@
 import type { MoodDimension } from "@/lib/mood-dimensions";
+import { describePosition } from "@/lib/scoring/explain";
 import { cn } from "@/lib/utils";
 
 interface MoodDimensionRowProps {
   dimension: MoodDimension;
-  /** 0 to 100. Only meaningful once the control is enabled. */
-  value?: number;
-  /** Disabled until the Mood Engine is wired to the recommendation backend. */
-  disabled?: boolean;
+  /** 0 to 100; see lib/mood-dimensions.ts for the scale. */
+  value: number;
+  onChange: (value: number) => void;
   className?: string;
 }
 
 /**
  * One spectrum of the Cinematic Mood Engine, built on a native range input so keyboard
- * and screen-reader behaviour comes for free. In this build it is deliberately disabled
- * and reads "Not set": it does not influence anything yet.
+ * (arrows, Home, End, PageUp/PageDown) and screen-reader behaviour come for free.
+ * `aria-valuetext` announces the plain-language position ("leans hopeful") rather than a
+ * bare number; the visible readout shows both.
  */
 export function MoodDimensionRow({
   dimension,
-  value = 50,
-  disabled = true,
+  value,
+  onChange,
   className,
 }: MoodDimensionRowProps) {
   const inputId = `mood-${dimension.id}`;
   const descId = `${inputId}-desc`;
+  const position = describePosition(dimension, value);
   return (
     <div className={cn("py-5 first:pt-0 last:pb-0", className)}>
-      <div className="flex items-baseline justify-between gap-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <label htmlFor={inputId} className="text-sm font-medium text-bone">
           {dimension.low}
           <span aria-hidden="true" className="px-2 text-bone-dim">
@@ -34,12 +36,12 @@ export function MoodDimensionRow({
           <span className="sr-only"> to </span>
           {dimension.high}
         </label>
-        <output
-          htmlFor={inputId}
-          className="shrink-0 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-bone-dim"
+        <span
+          aria-hidden="true"
+          className="ml-auto shrink-0 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-gold"
         >
-          {disabled ? "Not set" : `${value}`}
-        </output>
+          {position} &middot; {value}
+        </span>
       </div>
       <input
         id={inputId}
@@ -48,11 +50,12 @@ export function MoodDimensionRow({
         max={100}
         step={1}
         value={value}
-        disabled={disabled}
+        onChange={(event) => onChange(Number(event.currentTarget.value))}
         aria-describedby={descId}
-        className="mt-3 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-line-strong accent-gold disabled:cursor-not-allowed disabled:opacity-50"
+        aria-valuetext={`${position}, ${value} out of 100`}
+        className="mt-2 h-8 w-full cursor-pointer accent-gold"
       />
-      <p id={descId} className="mt-2.5 text-xs leading-relaxed text-bone-dim">
+      <p id={descId} className="mt-1 text-xs leading-relaxed text-bone-dim max-lg:sr-only">
         {dimension.description}
       </p>
     </div>

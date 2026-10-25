@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { WatchlistView } from "@/components/watchlist/watchlist-view";
+import { SAMPLE_MOVIES } from "@/lib/movies/sample-movies";
 
 export const metadata: Metadata = {
   title: "Watchlist",
@@ -16,14 +16,9 @@ export default function WatchlistPage() {
         as="h1"
         eyebrow="Watchlist"
         title="Saved for later."
-        description="Your watchlist will be stored in this browser only. There are no accounts, so it will not follow you to another device."
+        description="Your watchlist is stored in this browser only. There are no accounts, so it will not follow you to another browser or device."
       />
-      <EmptyState
-        className="mt-10"
-        title="Nothing saved yet"
-        description="Saving films is not connected in this build. When it is, anything you add from Discover will show up here."
-        action={<ButtonLink href="/discover">Go to Discover</ButtonLink>}
-      />
+      <WatchlistView movies={SAMPLE_MOVIES} />
     </Container>
   );
 }

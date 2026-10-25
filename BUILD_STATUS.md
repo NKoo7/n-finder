@@ -3,86 +3,107 @@
 ## Milestone 1: Inspect and Plan - DONE (commit 9ef6a48)
 Backend skeleton: FastAPI app, GET /api/health, CORS via NFINDER_CORS_ORIGINS, 1 pytest test.
 
-## Milestone 2: Frontend foundation - DONE
-Scope kept to foundation only. No recommendation logic, no movie data, no API client.
+## Milestone 2: Frontend foundation - DONE (commit 83ad488)
+Next.js 16.4.3 App Router, React 19.3.0, Tailwind 4.3.3, TypeScript ~5.9.3 (pinned: typescript-eslint
+does not support TS 7), ESLint 9. Design tokens in `app/globals.css`, self-hosted OFL fonts
+(`app/fonts/LICENSES.md`), UI primitives in `components/ui/`, header/footer in `components/layout/`.
+Kokonut UI "Slide Text Button" effect adapted in `components/ui/button.tsx` (MIT, attributed).
+React Bits (MIT + Commons Clause) and Obsidian UI were reviewed; nothing integrated.
 
-### What exists now (frontend/)
-- Next.js 16.4.3 (App Router, Turbopack), React 19.3.0, Tailwind CSS 4.3.3, TypeScript ~5.9.3, ESLint 9.
-- Routes (all static): `/`, `/discover`, `/watchlist`, plus `not-found`.
-- Design tokens in `app/globals.css` (`@theme`): ink-950..700 charcoal, bone off-whites, gold accent,
-  line colours, easing curves. Dark only. Global focus ring, selection colour, static film grain,
-  `prefers-reduced-motion` handling.
-- Fonts self-hosted via `next/font/local` (Instrument Serif display, Geist body, Geist Mono labels).
-  See `app/fonts/LICENSES.md` (SIL OFL 1.1).
-- UI primitives in `components/ui/`: Button/ButtonLink (cva variants + optional slide label),
-  Container, SectionHeading, Surface, Badge, Skeleton, EmptyState, StatusNote, SearchField.
-- `components/layout/`: SiteHeader (client; sticky, aria-current, mobile menu with aria-expanded,
-  Escape to close), SiteFooter. Root layout has a skip-to-content link.
-- `components/mood/mood-dimension-row.tsx`: presentational row on a native range input.
-- `lib/mood-dimensions.ts`: the five spectrums as product copy only (no scoring semantics).
-- `lib/utils.ts`: `cn` helper.
+## Milestone 3: Functional discovery on a sample catalogue - DONE (this commit)
 
-### Honest state of the product (important)
-- Mood sliders and the search box on /discover are DISABLED and read "Not set"/"not connected yet".
-  They influence nothing. The page says so in a StatusNote.
-- There is no movie catalogue, no recommendation engine, no watchlist persistence, no API client.
-- The landing page describes intended behaviour in future/"designed to" language.
+### Features implemented (all verified in a real browser, see results below)
+- **Sample catalogue** (`lib/movies/sample-movies.ts`): 44 real films. Titles, years and directors are
+  general knowledge and are NOT verified against an external source. Synopses are original wording.
+  Mood ratings and pacing are subjective curated demo classifications. The UI says all of this
+  (Discover notice, detail dialog). No poster URLs are bundled (no reliable licensed source).
+- **Mood engine**: five native range sliders, all live. Scale 0..100 per dimension (0 = low pole,
+  100 = high pole, 50 = balanced), documented in `lib/mood-dimensions.ts`. Visible readout
+  ("leaning hopeful . 70"), `aria-valuetext`, keyboard support from the native input, Reset button,
+  collapsible panel on small screens.
+- **Scoring** (`lib/scoring/mood-score.ts`, documented in the file header): per dimension
+  closeness = 1 - |pref - rating|/100; weight = 1 + 2*|pref - 50|/50 (1..3); score = weighted mean x100.
+  Deterministic; ties break by title then id. It is a RELATIVE compatibility score, not a probability,
+  and the UI states that. Missing/non-finite film attributes are skipped; preferences are clamped
+  and NaN becomes 50. Pacing and themes are displayed but NOT scored yet.
+- **Explanations** (`lib/scoring/explain.ts`): built from the same per-dimension numbers as the score.
+  Levels: close <=15, partial <=35, far >35 points apart. Detail view groups them into close matches,
+  partial matches and potential mismatches, plus genre-filter matches.
+- **Search + genre filter** (`lib/movies/filter.ts`): case- and accent-insensitive title search;
+  genre chips with "any selected genre" semantics; combined with AND against search; ranking is computed
+  first so filters never change the order. Empty state with a clear-filters action.
+- **Movie cards** (`components/movies/`): generated fallback artwork (deterministic per id), title, year,
+  up to two genres, compatibility meter, save button. `posterUrl` is supported (image hides itself on
+  load error) but unused.
+- **Detail view**: native `<dialog>` (focus trap, Escape, inert background, focus returns to opener),
+  backdrop-click and close button, full-screen sheet on mobile, body scroll lock.
+- **Watchlist** (`lib/watchlist/`): localStorage key `nfinder.watchlist.v1`, built on
+  `useSyncExternalStore` so no browser API runs during server render. De-duplicated, restored on refresh,
+  cross-tab `storage` events handled. Malformed data -> treated as empty with a notice (next save replaces
+  it). Unavailable/blocked/over-quota storage -> in-memory fallback with a notice. Unknown (stale) ids are
+  ignored with a note. `/watchlist` renders nothing for the list until hydrated, to avoid a wrong flash
+  of "Nothing saved yet".
+- Landing page copy updated to match what now works. No backend, auth, database or AI integration added.
 
-### UI library usage (user asked for Kokonut UI, React Bits, Obsidian UI)
-- Kokonut UI (MIT): `Slide Text Button` effect adapted into `components/ui/button.tsx` with attribution
-  in the file header. Source fetched from raw.githubusercontent.com because kokonutui.com is not on the
-  sandbox network allowlist, so `shadcn add @kokonutui/...` could not be used.
-- React Bits (MIT + Commons Clause: fine for use inside an app, not for reselling the components):
-  reviewed, nothing integrated. Noise (320 lines) and Spotlight Card (340 lines) are far heavier than
-  needed; film grain is done with ~10 lines of CSS instead.
-- Obsidian UI (MIT): reviewed; could not locate component source paths on raw GitHub. Nothing integrated.
-- Candidates for later milestones: Kokonut Liquid Slider / Detent Dial, React Bits Elastic Slider
-  (Mood Engine controls, Milestone 3); Kokonut Contact Sheet / Lightbox Grid (poster grids).
-  Verify licence, size and keyboard accessibility before adopting any of them.
+### Files changed or added (frontend/)
+New logic: `lib/movies/{types,sample-movies,filter,poster-art}.ts`, `lib/scoring/{mood-score,explain}.ts`,
+`lib/watchlist/{storage,store,use-watchlist}.ts`. New tests next to each (`*.test.ts`, 7 files).
+New UI: `components/movies/{movie-card,movie-poster,movie-detail-dialog,compatibility-meter,genre-filter}.tsx`,
+`components/mood/mood-panel.tsx`, `components/discover/discover-view.tsx`,
+`components/watchlist/{watchlist-view,watchlist-notice}.tsx`.
+Modified: `lib/mood-dimensions.ts` (scale docs, `name`, preference types), `components/mood/mood-dimension-row.tsx`
+(now live), `app/discover/page.tsx`, `app/watchlist/page.tsx`, `app/page.tsx` (copy only),
+`package.json` (+vitest, @types/node ^22, scripts `test`), `vitest.config.mts`.
+Backend untouched.
 
-### Files changed or added
-Added: frontend/ (scaffold + everything above). Backend untouched.
-Key files: frontend/app/{layout.tsx,page.tsx,globals.css,not-found.tsx}, frontend/app/discover/page.tsx,
-frontend/app/watchlist/page.tsx, frontend/app/fonts/*, frontend/components/**, frontend/lib/**.
-Also committed: frontend/AGENTS.md (generated by create-next-app; points to bundled Next docs),
-frontend/README.md (scaffold boilerplate, to be replaced in Milestone 5).
+### Dependencies
+Added dev-only: `vitest` 5.0.5. Bumped `@types/node` ^20 -> ^22 (vitest peer requirement; matches the
+Node 22 runtime). No new UI or runtime libraries.
 
 ### Commands run and actual results (final code)
-- `npm run typecheck` (tsc --noEmit): exit 0
-- `npm run lint` (eslint): exit 0, no warnings
-- `npm run build`: exit 0; routes /, /_not-found, /discover, /watchlist all prerendered static
-- `python -m pytest -q` (backend): 1 passed, 1 warning (unchanged)
-- Browser check (Playwright/Chromium against `next start`): at 1366, 820 and 390 px widths on
-  /, /discover, /watchlist: 0px horizontal overflow, all 3 fonts loaded, 0 console errors/warnings;
-  mobile menu toggles aria-expanded and closes on Escape; first Tab stop is the skip link;
-  5 range inputs and the search input are disabled as intended; no third-party requests in HTML.
-- NOT run: automated accessibility audit (axe), Lighthouse, Safari/Firefox, real screen reader.
-  Contrast ratios in globals.css comments are hand-calculated, not tool-verified.
+- `npm test` (vitest): 7 files, 63 tests passed
+- `npm run typecheck`: exit 0
+- `npm run lint`: exit 0, no output
+- `npm run build`: exit 0; /, /_not-found, /discover, /watchlist all static
+- backend `python -m pytest -q`: 1 passed, 1 warning (unchanged)
+- Test-suite sanity: deliberately ignoring the `focus` slider in the scorer made exactly 3 tests fail;
+  restored afterwards and all pass.
+- Browser run (Playwright/Chromium against `next start`, 56 checks, 56 passed): 44 cards; every slider
+  reorders results via keyboard (Home/End) and the top film moves toward the chosen pole; reset restores
+  the default order; identical inputs give identical order; search, genre, combined filters and empty
+  state; dialog open/close via click, Enter, Escape, close button and backdrop, focus moves in, is
+  trapped, and returns to the opener; save/remove, no duplicates, persistence across reload, watchlist
+  page; malformed storage and blocked localStorage both handled without errors; no horizontal overflow
+  at 1366/820/390 px; mobile dialog fills the viewport; mobile mood panel collapses; no console errors.
+  The browser script lives in /tmp and is NOT committed (no e2e framework added).
+- NOT run: automated accessibility audit (axe/Lighthouse), Firefox/Safari, a real screen reader,
+  real touch devices. Colour contrast is hand-calculated.
 
-### Problems found and fixed during this milestone
-- Stock scaffold failed to build: `next/font/google` needs fonts.googleapis.com, which the sandbox
-  blocks. Fixed by self-hosting OFL fonts with `next/font/local`.
-- typescript-eslint supports TypeScript <6.1.0 while npm "latest" is 7.0.2; pinned to ~5.9.3.
-- Duplicate pole labels in MoodDimensionRow removed; truncated search placeholder shortened.
-- A stale `next start` process kept serving an old build (EADDRINUSE) and briefly produced
-  misleading checks; caught by reading the server log, killed by exact PID, re-verified.
+### Problems found and fixed this milestone
+- vitest peer conflict with `@types/node@^20`: fixed by aligning to ^22 (no `--force`).
+- Slider readout overflowed the panel on long labels; card meters misaligned across rows; chips touched
+  the search field; "rated leans X" wording was ungrammatical. All fixed and re-measured.
+- One of my own e2e assertions was wrong (CSS uppercase vs DOM text); verified against the DOM, fixed.
 
-## Known issues / notes
-- Starlette TestClient deprecation warning about httpx (backend). Revisit in Milestone 5.
-- Full-page screenshots show a faint tonal band: artifact of the fixed-position grain layer only
-  covering one viewport height. Not present in normal viewing.
-- `frontend/README.md` is still create-next-app boilerplate.
-- Shell is /bin/sh: no brace expansion, no PIPESTATUS; use `bash -c`. Background servers do not
-  survive across tool calls unless started with `setsid nohup ... &`. Stop servers by exact PID.
-- Mood spectrum value semantics (0 = low pole, 1 = high pole, order as in the spec) are documented
-  in lib/mood-dimensions.ts but must be confirmed when the Pydantic schema is written.
+## Known limitations
+- Catalogue is 44 films of demo data; metadata is unverified; no real posters (all films use generated art).
+- Themes and pacing are shown but do not affect ranking. No genre/theme similarity yet.
+- Mood preferences, search and filters are not persisted or URL-addressable (reset on reload).
+- Scoring runs in the browser only. There is no backend recommendation endpoint, no Wildcard mode, no
+  excluded-genre or "unwanted attribute" controls, and no diversity logic yet.
+- TS types (`Movie`, `MoodPreferences`) are not yet mirrored by Pydantic schemas.
+- Watchlist is per-browser; saved ids that leave the catalogue are ignored, not cleaned up.
+- After removing a film from the Watchlist page, keyboard focus is not moved to a sensible neighbour.
+- Starlette TestClient deprecation warning (backend). `frontend/README.md` is still scaffold boilerplate.
+- Shell is /bin/sh: use `bash -c` for PIPESTATUS; start servers with `setsid nohup ... &` and stop them
+  by exact PID (never `pkill -f` with a pattern that appears in your own command).
 
-## Next exact task (Milestone 3: the experience, on sample data)
-1. Add a clearly labelled, curated sample dataset (TypeScript, in frontend/lib or public) with a
-   `Movie` type including the Movie DNA attributes. Mark it unverified; do not invent real-world facts
-   presented as verified.
-2. Make the five mood sliders interactive with visible current values and keyboard support
-   (state in a client component; no fake recommendation scoring yet).
-3. Movie cards with generated fallback artwork, detail view, search, genre filter, localStorage
-   watchlist with try/catch and loading/empty/error states.
-4. Keep recommendation scoring for Milestone 4 (Python engine).
+## Next recommended milestone: Milestone 4 - backend recommendation engine
+1. Pydantic schemas mirroring `Movie`/`MoodPreferences`; move the sample catalogue to a shared JSON data
+   file (or generate the TS file from it) so frontend and backend cannot drift.
+2. Implement the deterministic Python engine reproducing the documented scoring, plus genre and theme
+   matching, excluded genres, diversity, and a distinct Wildcard strategy. pytest coverage for ranking,
+   exclusions, missing metadata, wildcard and explanation accuracy. Port-parity test against the TS scores.
+3. FastAPI endpoints: GET /api/movies, POST /api/recommendations (validated), wildcard endpoint.
+4. A small typed API client in the frontend with real loading/error states (network calls are genuinely
+   async then), keeping the local scoring as a documented fallback only if it is clearly labelled.

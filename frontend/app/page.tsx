@@ -97,7 +97,7 @@ export default function HomePage() {
           <SectionHeading
             eyebrow="How it works"
             title="Mood in, reasons out."
-            description="N-finder is built around three ideas. This build lays the groundwork; each one is connected in later stages."
+            description="N-finder is built around three ideas. In this build the mood controls and explanations work on a labelled sample catalogue; Wildcard discovery and the server-side engine come later."
           />
           <ol className="mt-12 grid gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-3">
             {STEPS.map((step, i) => (
@@ -135,7 +135,7 @@ export default function HomePage() {
       <section aria-label="Get started" className="border-t border-line py-14">
         <Container className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
           <p className="max-w-lg font-display text-3xl leading-tight text-bone sm:text-4xl">
-            Ready to see where the discovery page is heading?
+            Ready to try it on the sample catalogue?
           </p>
           <ButtonLink href="/discover" variant="outline" size="lg">
             Go to Discover
