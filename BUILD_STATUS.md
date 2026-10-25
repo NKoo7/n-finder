@@ -85,6 +85,44 @@ Node 22 runtime). No new UI or runtime libraries.
   the search field; "rated leans X" wording was ungrammatical. All fixed and re-measured.
 - One of my own e2e assertions was wrong (CSS uppercase vs DOM text); verified against the DOM, fixed.
 
+## First prototype (backend + wildcard + connected UI) - DONE (this commit, supersedes the "next milestone" below)
+Built in one pass at the owner's request to skip separate milestones.
+- **Shared catalogue**: `backend/app/data/movies.json`, generated from the TS data by
+  `node scripts/export-catalogue.mjs`. A frontend test asserts the two are identical.
+- **Python engine** (`backend/app/services/recommender.py`, formula in its header): weighted mood match
+  (same formula as the TS scorer) + optional genre and theme overlap; excluded genres are a hard filter;
+  greedy diversity re-rank; deterministic tie-breaks.
+- **Wildcard** (distinct strategy): "usual" genres = the user's selected genres, else genres that recur in
+  their top-5 mood matches; candidates share none of them and must still reach attribute match >= 60; the
+  pick is chosen from the best 5 using a seed (same seed = same film). Initial version used every genre in
+  the top 5 as "usual" and found nothing for extreme moods; fixed after inspecting the numbers.
+- **API**: GET /api/movies, /api/movies/{id}; POST /api/recommendations, /api/wildcard; Pydantic validation
+  (422 on bad input, extra fields forbidden). Health endpoint unchanged.
+- **Frontend wiring**: `lib/api.ts` (typed client, response-shape checks), `lib/use-ranking.ts` (debounced,
+  cancellable), `components/discover/wildcard-panel.tsx`. The server ranking is used when available; if it
+  is loading or unreachable the identical local scorer is used and the UI says which engine is active.
+- **Parity guard**: `backend/scripts/make_parity_fixture.py` -> `frontend/lib/scoring/parity-fixture.json`;
+  TS scores must match Python to 4 decimals for 6 slider settings x 44 films.
+- `README.md` (root) with run instructions; `frontend/.env.example` (+ `.gitignore` exception).
+
+### Results (final code)
+- backend `python -m pytest -q`: 42 passed (+1 existing warning)
+- frontend `npm test`: 8 files, 70 passed; `npm run typecheck` 0; `npm run lint` 0; `npm run build` 0
+- `npm run dev` starts and serves /discover (200)
+- Browser (Playwright, both servers running): earlier 56 checks still pass; 14 new checks pass: slider move
+  sends POST /api/recommendations with the slider value; results reorder; Wildcard returns a film with an
+  explanation + strategy + caveat, is never in the selected genre, varies across presses, opens the detail
+  dialog; with the backend killed mid-session the UI falls back to the local scorer with a visible notice and
+  Wildcard shows a clear error, with no uncaught errors.
+- Not run: accessibility audit, Firefox/Safari, load/perf testing, deployment.
+
+### Prototype limitations
+- UI has no controls for excluded genres or themes (API supports them, tests cover them).
+- The UI sends only the mood sliders (plus the selected genres as Wildcard's "usual" hint) to the server.
+- Detail-dialog explanations are computed locally (identical numbers; parity-tested), not fetched.
+- CORS defaults to http://localhost:3000 only; set NFINDER_CORS_ORIGINS for other origins.
+- No auth, no database, no TMDB; catalogue is 44 demo films with unverified metadata.
+
 ## Known limitations
 - Catalogue is 44 films of demo data; metadata is unverified; no real posters (all films use generated art).
 - Themes and pacing are shown but do not affect ranking. No genre/theme similarity yet.
@@ -98,7 +136,7 @@ Node 22 runtime). No new UI or runtime libraries.
 - Shell is /bin/sh: use `bash -c` for PIPESTATUS; start servers with `setsid nohup ... &` and stop them
   by exact PID (never `pkill -f` with a pattern that appears in your own command).
 
-## Next recommended milestone: Milestone 4 - backend recommendation engine
+## Superseded plan (items 1-4 below are now done in the prototype; kept for history)
 1. Pydantic schemas mirroring `Movie`/`MoodPreferences`; move the sample catalogue to a shared JSON data
    file (or generate the TS file from it) so frontend and backend cannot drift.
 2. Implement the deterministic Python engine reproducing the documented scoring, plus genre and theme

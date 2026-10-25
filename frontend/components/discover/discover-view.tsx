@@ -11,6 +11,7 @@ import { GenreFilter } from "@/components/movies/genre-filter";
 import { MovieCard } from "@/components/movies/movie-card";
 import { MovieDetailDialog } from "@/components/movies/movie-detail-dialog";
 import { WatchlistNotice } from "@/components/watchlist/watchlist-notice";
+import { WildcardPanel } from "./wildcard-panel";
 import {
   DEFAULT_PREFERENCES,
   MOOD_DIMENSIONS,
@@ -21,6 +22,7 @@ import { availableGenres, filterMovies } from "@/lib/movies/filter";
 import { SAMPLE_DATASET_LABEL } from "@/lib/movies/sample-movies";
 import type { Genre, Movie } from "@/lib/movies/types";
 import { rankMovies } from "@/lib/scoring/mood-score";
+import { useRanking } from "@/lib/use-ranking";
 import { useWatchlist } from "@/lib/watchlist/use-watchlist";
 
 interface DiscoverViewProps {
@@ -39,13 +41,25 @@ export function DiscoverView({ movies }: DiscoverViewProps) {
 
   const allGenres = useMemo(() => availableGenres(movies), [movies]);
 
-  // Rank everything by mood, then keep only films that pass search + genre. Ranking first
-  // means the order never depends on the filters, so identical inputs give identical lists.
+  // The backend engine is the source of truth. While it is loading, or if it is unreachable, the
+  // identical built-in scorer is used (a parity test keeps the two in step) and the UI says which.
+  const engine = useRanking(preferences);
+  const localRanking = useMemo(() => rankMovies(movies, preferences), [movies, preferences]);
+  const ranking = useMemo(() => {
+    if (!engine.results) return localRanking;
+    const byId = new Map(movies.map((m) => [m.id, m]));
+    const fromServer = engine.results.flatMap((r) => {
+      const movie = byId.get(r.movie.id);
+      return movie ? [{ movie, score: r.score }] : [];
+    });
+    return fromServer.length === movies.length ? fromServer : localRanking;
+  }, [engine.results, localRanking, movies]);
+
+  // Ranking is computed first and filters only remove films, so filters never change the order.
   const visible = useMemo(() => {
-    const ranked = rankMovies(movies, preferences);
     const allowed = new Set(filterMovies(movies, query, genres).map((m) => m.id));
-    return ranked.filter((s) => allowed.has(s.movie.id));
-  }, [movies, preferences, query, genres]);
+    return ranking.filter((s) => allowed.has(s.movie.id));
+  }, [movies, ranking, query, genres]);
 
   const selected = selectedId ? (movies.find((m) => m.id === selectedId) ?? null) : null;
   const filtersActive = query.trim() !== "" || genres.length > 0;
@@ -87,10 +101,19 @@ export function DiscoverView({ movies }: DiscoverViewProps) {
             <GenreFilter genres={allGenres} selected={genres} onToggle={toggleGenre} />
           </div>
 
+          <WildcardPanel movies={movies} preferences={preferences} genres={genres} onOpen={(m) => setSelectedId(m.id)} />
+
           <div className="mb-5 mt-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
             <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-gold">Results</h2>
             <p role="status" className="text-sm text-bone-muted">
               {visible.length} of {movies.length} films, ranked by relative compatibility with your mood
+            </p>
+            <p className="basis-full text-xs text-bone-dim">
+              {engine.error
+                ? `Ranking engine: built-in offline copy (${engine.error}).`
+                : engine.loading
+                  ? "Ranking engine: updating from the server..."
+                  : "Ranking engine: server."}
             </p>
           </div>
 
