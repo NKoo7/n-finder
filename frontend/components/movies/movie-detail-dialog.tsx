@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Bookmark, X } from "lucide-react";
+import { Bookmark, Heart, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { becauseYouLiked } from "@/lib/community/logic";
 import { MOOD_DIMENSIONS, type MoodPreferences } from "@/lib/mood-dimensions";
+import { catalogMeta } from "@/lib/movies/catalog-meta";
 import type { Genre, Movie } from "@/lib/movies/types";
 import {
   describePacing,
@@ -15,6 +17,7 @@ import {
 import { scoreMovie } from "@/lib/scoring/mood-score";
 import { CompatibilityMeter } from "./compatibility-meter";
 import { MoviePoster } from "./movie-poster";
+import { RatingBadges } from "./rating-badges";
 
 interface MovieDetailDialogProps {
   /** The film to show, or null when closed. */
@@ -22,17 +25,22 @@ interface MovieDetailDialogProps {
   /** Current mood settings. Omit to show the film's curated profile without a fit score. */
   preferences?: MoodPreferences;
   activeGenres?: readonly Genre[];
+  allMovies?: readonly Movie[];
   saved: boolean;
+  liked?: boolean;
+  likeCount?: number;
   onToggleSave: (movie: Movie) => void;
+  onToggleLike?: (movie: Movie) => void;
+  onOpen?: (movie: Movie) => void;
   onClose: () => void;
 }
 
-/** Tiny two-marker track: filled gold dot = the film, ringed dot = your setting. */
+/** Tiny two-marker track: filled dot = the film, ringed dot = your setting. */
 function MoodTrack({ rating, preference }: { rating: number; preference?: number }) {
   return (
     <div aria-hidden="true" className="relative mt-2 h-1.5 rounded-full bg-line-strong">
       <span
-        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold"
+        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neon-green"
         style={{ left: `${rating}%` }}
       />
       {preference !== undefined ? (
@@ -55,7 +63,7 @@ function ExplanationGroup({
   if (items.length === 0) return null;
   return (
     <section className="mt-5 first:mt-0">
-      <h4 className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-gold">{title}</h4>
+      <h4 className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-neon-violet">{title}</h4>
       <ul className="mt-2 divide-y divide-line">
         {items.map((item) => (
           <li key={item.dimension.id} className="py-3 first:pt-1">
@@ -72,8 +80,13 @@ export function MovieDetailDialog({
   movie,
   preferences,
   activeGenres = [],
+  allMovies = [],
   saved,
+  liked = false,
+  likeCount,
   onToggleSave,
+  onToggleLike,
+  onOpen,
   onClose,
 }: MovieDetailDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -101,6 +114,8 @@ export function MovieDetailDialog({
   const scored = movie && preferences ? scoreMovie(movie, preferences) : null;
   const explanation =
     movie && preferences ? explainMovie(movie, preferences, activeGenres) : null;
+  const meta = movie ? catalogMeta(movie.id) : null;
+  const related = movie ? becauseYouLiked([movie.id], allMovies, 4) : [];
 
   return (
     <dialog
@@ -116,7 +131,7 @@ export function MovieDetailDialog({
       {movie ? (
         <div className="flex h-dvh flex-col sm:h-auto sm:max-h-[90dvh]">
           <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3 sm:px-7">
-            <p className="font-mono text-xs uppercase tracking-[0.18em] text-gold">Film details</p>
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-neon-pink">Film details</p>
             <button
               type="button"
               onClick={onClose}
@@ -138,6 +153,7 @@ export function MovieDetailDialog({
                 <p className="mt-2 text-sm text-bone-muted">
                   {movie.year} &middot; Directed by {movie.directors.join(", ")}
                 </p>
+                <RatingBadges movieId={movie.id} className="mt-3" />
                 <div className="mt-3 flex flex-wrap gap-2">
                   {movie.genres.map((genre) => (
                     <Badge key={genre}>{genre}</Badge>
@@ -146,6 +162,14 @@ export function MovieDetailDialog({
                 <p className="mt-5 text-base leading-relaxed text-bone-muted">{movie.synopsis}</p>
 
                 <dl className="mt-5 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+                  {meta && meta.cast.length > 0 ? (
+                    <div className="sm:col-span-2">
+                      <dt className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-bone-dim">
+                        Cast
+                      </dt>
+                      <dd className="text-bone-muted">{meta.cast.join(", ")}</dd>
+                    </div>
+                  ) : null}
                   <div>
                     <dt className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-bone-dim">
                       Pacing
@@ -162,20 +186,70 @@ export function MovieDetailDialog({
                   </div>
                 </dl>
 
-                <Button
-                  variant={saved ? "outline" : "primary"}
-                  aria-pressed={saved}
-                  onClick={() => onToggleSave(movie)}
-                  className="mt-6"
-                >
-                  <Bookmark
-                    aria-hidden="true"
-                    className={saved ? "mr-2 size-4 fill-gold text-gold" : "mr-2 size-4"}
-                  />
-                  {saved ? "Saved to watchlist" : "Save to watchlist"}
-                </Button>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  {onToggleLike ? (
+                    <Button
+                      variant={liked ? "outline" : "primary"}
+                      aria-pressed={liked}
+                      onClick={() => onToggleLike(movie)}
+                      className={
+                        liked
+                          ? "border-neon-pink text-neon-pink"
+                          : "bg-neon-pink-deep text-white hover:bg-neon-pink"
+                      }
+                    >
+                      <Heart
+                        aria-hidden="true"
+                        className={liked ? "mr-2 size-4 fill-neon-pink text-neon-pink" : "mr-2 size-4"}
+                      />
+                      {liked ? "Liked" : "Like"}
+                      {likeCount !== undefined ? (
+                        <span className="ml-2 font-mono text-xs tabular-nums opacity-80">{likeCount}</span>
+                      ) : null}
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant={saved ? "outline" : "primary"}
+                    aria-pressed={saved}
+                    onClick={() => onToggleSave(movie)}
+                    className={saved ? "border-neon-green text-neon-green" : ""}
+                  >
+                    <Bookmark
+                      aria-hidden="true"
+                      className={saved ? "mr-2 size-4 fill-neon-green text-neon-green" : "mr-2 size-4"}
+                    />
+                    {saved ? "Saved to your list" : "Save to list"}
+                  </Button>
+                </div>
               </div>
             </div>
+
+            {related.length > 0 ? (
+              <section aria-labelledby="related-title" className="mt-8">
+                <h3 id="related-title" className="font-display text-2xl text-bone">
+                  If you like this, try<span className="text-aurora italic">&hellip;</span>
+                </h3>
+                <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {related.map(({ movie: pick, reason }) => (
+                    <li key={pick.id}>
+                      <button
+                        type="button"
+                        onClick={() => onOpen?.(pick)}
+                        className="glass-panel group flex w-full items-center gap-3 p-3 text-left transition-colors hover:border-neon-violet"
+                      >
+                        <MoviePoster movie={pick} className="w-14 shrink-0" />
+                        <span className="min-w-0">
+                          <span className="block truncate font-display text-lg text-bone transition-colors group-hover:text-neon-violet">
+                            {pick.title}
+                          </span>
+                          <span className="mt-0.5 block text-xs leading-snug text-bone-muted">{reason}</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
             <section
               aria-labelledby="fit-title"
@@ -188,7 +262,7 @@ export function MovieDetailDialog({
                       Why it ranks here
                     </h3>
                     <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-bone-dim">
-                      Gold dot: film &middot; ring: your setting
+                      Green dot: film &middot; ring: your setting
                     </p>
                   </div>
                   <CompatibilityMeter score={scored.score} className="mt-3" />
@@ -226,8 +300,8 @@ export function MovieDetailDialog({
                 </>
               )}
               <p className="mt-5 text-xs leading-relaxed text-bone-dim">
-                Mood ratings are subjective, curated demo classifications, not facts. Year and
-                director are from general knowledge and not verified against an external source.
+                Mood ratings are subjective, curated demo classifications, not facts. IMDb and
+                Rotten Tomatoes values shown are labelled sample snapshots, not live scores.
               </p>
             </section>
           </div>

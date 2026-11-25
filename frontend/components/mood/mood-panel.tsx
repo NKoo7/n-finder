@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ChevronDown, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Surface } from "@/components/ui/surface";
 import {
   MOOD_DIMENSIONS,
   type MoodDimensionId,
@@ -24,10 +23,10 @@ interface MoodPanelProps {
 export function MoodPanel({ preferences, onChange, onReset, isDefault, className }: MoodPanelProps) {
   const [open, setOpen] = useState(true);
   return (
-    <Surface role="group" aria-labelledby="mood-title" className={cn("p-6", className)}>
+    <div role="group" aria-labelledby="mood-title" className={cn("glass-panel p-6", className)}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 id="mood-title" className="font-display text-3xl text-bone">
+          <h2 id="mood-title" className="text-aurora font-display text-3xl">
             Cinematic Mood Engine
           </h2>
           <p className="mt-1 text-sm text-bone-dim">Five spectrums, one mood.</p>
@@ -68,6 +67,6 @@ export function MoodPanel({ preferences, onChange, onReset, isDefault, className
           Reset mood
         </Button>
       </div>
-    </Surface>
+    </div>
   );
 }

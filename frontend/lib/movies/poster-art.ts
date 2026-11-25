@@ -41,6 +41,31 @@ function sequence(seed: number): () => number {
   };
 }
 
+export interface PosterPalette {
+  /** Gradient stops, top to bottom. */
+  from: string;
+  via: string;
+  to: string;
+  /** Accent used for shapes and the horizon band. */
+  accent: string;
+}
+
+const POSTER_PALETTES: readonly PosterPalette[] = [
+  { from: "#4c1d95", via: "#7c3aed", to: "#120b22", accent: "#f472b6" },
+  { from: "#831843", via: "#db2777", to: "#120b22", accent: "#4ade80" },
+  { from: "#14532d", via: "#16a34a", to: "#120b22", accent: "#f472b6" },
+  { from: "#1e3a8a", via: "#2563eb", to: "#120b22", accent: "#a78bfa" },
+  { from: "#701a75", via: "#c026d3", to: "#120b22", accent: "#4ade80" },
+  { from: "#1e1b4b", via: "#4f46e5", to: "#120b22", accent: "#60a5fa" },
+  { from: "#064e3b", via: "#059669", to: "#120b22", accent: "#60a5fa" },
+  { from: "#581c87", via: "#9333ea", to: "#120b22", accent: "#22d3ee" },
+];
+
+/** Deterministic vibrant palette per film id. */
+export function posterPalette(id: string): PosterPalette {
+  return POSTER_PALETTES[hashString(id) % POSTER_PALETTES.length];
+}
+
 export function posterArt(id: string): PosterArt {
   const next = sequence(hashString(id));
   const shapes: PosterShape[] = Array.from({ length: 3 }, () => ({

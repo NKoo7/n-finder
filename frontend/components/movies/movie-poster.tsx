@@ -1,5 +1,5 @@
 import type { Movie } from "@/lib/movies/types";
-import { posterArt } from "@/lib/movies/poster-art";
+import { posterArt, posterPalette } from "@/lib/movies/poster-art";
 import { cn } from "@/lib/utils";
 
 type PosterMovie = Pick<Movie, "id" | "title" | "year" | "posterUrl">;
@@ -16,11 +16,12 @@ interface MoviePosterProps {
  */
 export function MoviePoster({ movie, className }: MoviePosterProps) {
   const art = posterArt(movie.id);
+  const palette = posterPalette(movie.id);
   const gradientId = `poster-grad-${movie.id}`;
   return (
     <div
       className={cn(
-        "relative aspect-[2/3] w-full overflow-hidden rounded-lg border border-line bg-ink-800",
+        "relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-line-strong/60 bg-ink-800",
         className,
       )}
     >
@@ -28,12 +29,13 @@ export function MoviePoster({ movie, className }: MoviePosterProps) {
         aria-hidden="true"
         viewBox="0 0 200 300"
         preserveAspectRatio="xMidYMid slice"
-        className="absolute inset-0 size-full"
+        className="absolute inset-0 size-full transition-transform duration-500 ease-[var(--ease-cine)] group-hover:scale-110 motion-reduce:transition-none"
       >
         <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" style={{ stopColor: "var(--color-ink-700)" }} />
-            <stop offset="1" style={{ stopColor: "var(--color-ink-950)" }} />
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0.35" y2="1">
+            <stop offset="0" stopColor={palette.from} />
+            <stop offset="0.55" stopColor={palette.via} />
+            <stop offset="1" stopColor={palette.to} />
           </linearGradient>
         </defs>
         <rect width="200" height="300" fill={`url(#${gradientId})`} />
@@ -43,8 +45,8 @@ export function MoviePoster({ movie, className }: MoviePosterProps) {
             cx={s.cx}
             cy={s.cy}
             r={s.r}
-            fillOpacity={s.opacity}
-            style={{ fill: "var(--color-gold)" }}
+            fillOpacity={Math.min(0.5, s.opacity * 2.4)}
+            fill={palette.accent}
           />
         ))}
         <rect
@@ -53,18 +55,19 @@ export function MoviePoster({ movie, className }: MoviePosterProps) {
           width="280"
           height="1.5"
           transform={`rotate(${art.angle} 100 ${art.horizon})`}
-          style={{ fill: "var(--color-gold)" }}
-          fillOpacity="0.55"
+          fill={palette.accent}
+          fillOpacity="0.8"
         />
         <rect
           x="8"
           y="8"
           width="184"
           height="284"
-          rx="4"
+          rx="6"
           fill="none"
           strokeWidth="0.75"
-          style={{ stroke: "var(--color-line-strong)" }}
+          stroke={palette.accent}
+          strokeOpacity="0.35"
         />
       </svg>
       <div

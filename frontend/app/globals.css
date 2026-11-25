@@ -1,32 +1,131 @@
 @import "tailwindcss";
 
 /*
-  N-finder design tokens
-  Direction: deep charcoal surfaces, off-white type, one restrained amber/gold accent.
-  Contrast (against ink-950): bone ~16:1, bone-muted ~7.5:1, bone-dim ~5:1, gold ~8:1.
+  N-finder design tokens — "Neon Cinema" direction.
+  Dominant deep-purple fields; full-chroma green, pink and violet accents; blue in support.
+  Contrast (against ink-950): bone ~15:1, bone-muted ~7:1, neon accents ~6:1+.
 */
 @theme {
-  --color-ink-950: #0a0a0b;
-  --color-ink-900: #101012;
-  --color-ink-850: #151517;
-  --color-ink-800: #1a1a1d;
-  --color-ink-700: #242428;
+  --color-ink-950: #0b0716;
+  --color-ink-900: #120b22;
+  --color-ink-850: #180f2e;
+  --color-ink-800: #1f1440;
+  --color-ink-700: #2b1d55;
 
-  --color-line: #2a2a2f;
-  --color-line-strong: #3b3b42;
+  --color-line: #2e2254;
+  --color-line-strong: #443377;
 
-  --color-bone: #ede9e1;
-  --color-bone-muted: #a8a399;
-  --color-bone-dim: #8a8579;
+  --color-bone: #f3effa;
+  --color-bone-muted: #b3a9cc;
+  --color-bone-dim: #8d81ad;
 
-  --color-gold: #c9a24a;
-  --color-gold-bright: #dbb865;
-  --color-gold-deep: #8f6f26;
+  --color-neon-violet: #a78bfa;
+  --color-neon-violet-deep: #7c3aed;
+  --color-neon-pink: #f472b6;
+  --color-neon-pink-deep: #db2777;
+  --color-neon-green: #4ade80;
+  --color-neon-green-deep: #16a34a;
+  --color-neon-blue: #60a5fa;
+  --color-neon-blue-deep: #2563eb;
+  --color-neon-cyan: #22d3ee;
+  --color-neon-cyan-deep: #0891b2;
 
-  --color-danger: #d4685a;
+  /* Legacy token names kept green so older call sites stay on-palette. */
+  --color-gold: #4ade80;
+  --color-gold-bright: #86efac;
+  --color-gold-deep: #15803d;
+
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
 
   --ease-cine: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-slide: cubic-bezier(0.77, 0, 0.175, 1);
+
+  --animate-hero-zoom: hero-zoom 1.4s var(--ease-cine) both;
+  --animate-rise: rise 0.9s var(--ease-cine) both;
+  --animate-aurora: aurora 18s ease-in-out infinite alternate;
+  --animate-aurora-slow: aurora 26s ease-in-out infinite alternate-reverse;
+  --animate-gradient-pan: gradient-pan 7s ease infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-glow-pulse: glow-pulse 3.2s ease-in-out infinite;
+  --animate-slow-spin: slow-spin 70s linear infinite;
+
+  @keyframes hero-zoom {
+    from {
+      opacity: 0;
+      transform: scale(1.28);
+      filter: blur(14px);
+    }
+    60% {
+      filter: blur(0);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes aurora {
+    from {
+      transform: translate(-8%, -4%) scale(1) rotate(0deg);
+    }
+    50% {
+      transform: translate(10%, 8%) scale(1.25) rotate(12deg);
+    }
+    to {
+      transform: translate(-4%, 12%) scale(1.1) rotate(-8deg);
+    }
+  }
+
+  @keyframes gradient-pan {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+
+  @keyframes glow-pulse {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slow-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
 
 /* Font families come from next/font/local CSS variables set in app/layout.tsx. */
@@ -41,6 +140,7 @@
     color-scheme: dark;
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    scrollbar-color: var(--color-neon-violet-deep) var(--color-ink-900);
   }
 
   body {
@@ -51,14 +151,29 @@
     text-rendering: optimizeLegibility;
   }
 
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-ink-900);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(var(--color-neon-violet-deep), var(--color-neon-pink-deep));
+    border-radius: 9999px;
+    border: 2px solid var(--color-ink-900);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(var(--color-neon-violet), var(--color-neon-pink));
+  }
+
   ::selection {
-    background-color: color-mix(in srgb, var(--color-gold) 35%, transparent);
+    background-color: color-mix(in srgb, var(--color-neon-pink) 45%, transparent);
     color: var(--color-bone);
   }
 
-  /* One consistent, always-visible keyboard focus ring. */
   :focus-visible {
-    outline: 2px solid var(--color-gold);
+    outline: 2px solid var(--color-neon-green);
     outline-offset: 3px;
     border-radius: 2px;
   }
@@ -73,6 +188,220 @@
     opacity: 0.045;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
+}
+
+@layer components {
+  /* Animated spectrum text. */
+  .text-aurora {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-neon-violet),
+      var(--color-neon-pink),
+      var(--color-neon-green),
+      var(--color-neon-blue),
+      var(--color-neon-violet)
+    );
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: var(--animate-gradient-pan);
+  }
+
+  /* Soft drifting light blob: radial gradient instead of filter blur, cheap to composite. */
+  .aurora-blob {
+    position: absolute;
+    border-radius: 9999px;
+    background: radial-gradient(circle, currentColor 0%, transparent 70%);
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  /* App-wide flowing cinema light. Fixed behind every page; the parallax wrappers and
+     cursor glow are moved by JS (transform-only), the blobs drift on their own keyframes. */
+  .fluid-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .fluid-bg__base {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(165deg, var(--color-ink-950) 0%, var(--color-ink-900) 55%, var(--color-ink-850) 100%);
+  }
+  .fluid-bg__parallax {
+    position: absolute;
+    will-change: transform;
+  }
+  .fluid-bg__blob {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: radial-gradient(circle, currentColor 0%, transparent 70%);
+    will-change: transform;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  /* The names must be referenced from CSS itself — keyframes only used by inline
+     styles are tree-shaken out of the build. Duration/direction come from inline styles. */
+  .fluid-bg__blob[data-drift="a"] { animation-name: fluid-a; }
+  .fluid-bg__blob[data-drift="b"] { animation-name: fluid-b; }
+  .fluid-bg__blob[data-drift="c"] { animation-name: fluid-c; }
+  .fluid-bg__cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 40rem;
+    height: 40rem;
+    margin: -20rem 0 0 -20rem;
+    border-radius: 9999px;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-neon-violet) 26%, transparent) 0%,
+      color-mix(in srgb, var(--color-neon-pink) 10%, transparent) 40%,
+      transparent 70%
+    );
+    opacity: 0;
+    will-change: transform, opacity;
+    transition: opacity 0.4s var(--ease-cine);
+  }
+  .fluid-bg__vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 25%, rgba(11, 7, 22, 0.5) 100%);
+  }
+
+  @keyframes fluid-a {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    33% {
+      transform: translate3d(7%, -9%, 0) scale(1.18);
+    }
+    66% {
+      transform: translate3d(-8%, 6%, 0) scale(0.94);
+    }
+  }
+  @keyframes fluid-b {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1.05);
+    }
+    50% {
+      transform: translate3d(-10%, -7%, 0) scale(0.9);
+    }
+  }
+  @keyframes fluid-c {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    }
+    50% {
+      transform: translate3d(9%, 10%, 0) rotate(18deg) scale(1.2);
+    }
+  }
+
+  .glass-panel {
+    position: relative;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--color-neon-violet) 22%, var(--color-line));
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--color-neon-violet) 7%, transparent),
+        color-mix(in srgb, var(--color-neon-pink) 4%, transparent)
+      ),
+      color-mix(in srgb, var(--color-ink-900) 96%, transparent);
+  }
+
+  .btn-spectrum {
+    background-image: linear-gradient(
+      110deg,
+      var(--color-neon-violet-deep),
+      var(--color-neon-pink-deep),
+      var(--color-neon-green-deep),
+      var(--color-neon-violet-deep)
+    );
+    background-size: 250% 100%;
+    color: #fff;
+    animation: var(--animate-gradient-pan);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--color-neon-pink) 35%, transparent);
+    transition: box-shadow 0.3s var(--ease-cine), scale 0.2s var(--ease-cine);
+  }
+  .btn-spectrum:hover {
+    box-shadow: 0 0 42px color-mix(in srgb, var(--color-neon-pink) 55%, transparent);
+  }
+
+  /* Colorful mood sliders. Each row sets --slider-a / --slider-b. */
+  .mood-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      var(--slider-a, var(--color-neon-violet)),
+      var(--slider-b, var(--color-neon-pink))
+    );
+    outline-offset: 6px;
+    cursor: pointer;
+  }
+  .mood-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    border: 3px solid var(--color-ink-950);
+    background: var(--slider-b, var(--color-neon-pink));
+    box-shadow:
+      0 0 0 2px var(--slider-b, var(--color-neon-pink)),
+      0 0 16px color-mix(in srgb, var(--slider-b, var(--color-neon-pink)) 70%, transparent);
+    transition: scale 0.15s var(--ease-cine);
+  }
+  .mood-slider::-webkit-slider-thumb:hover {
+    scale: 1.2;
+  }
+  .mood-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    border: 3px solid var(--color-ink-950);
+    background: var(--slider-b, var(--color-neon-pink));
+    box-shadow:
+      0 0 0 2px var(--slider-b, var(--color-neon-pink)),
+      0 0 16px color-mix(in srgb, var(--slider-b, var(--color-neon-pink)) 70%, transparent);
+  }
+
+  .field-input {
+    width: 100%;
+    border-radius: 0.65rem;
+    border: 1px solid var(--color-line-strong);
+    background: color-mix(in srgb, var(--color-ink-850) 85%, transparent);
+    padding: 0.65rem 0.9rem;
+    font-size: 0.9rem;
+    color: var(--color-bone);
+    transition: border-color 0.2s var(--ease-cine), box-shadow 0.2s var(--ease-cine);
+  }
+  .field-input::placeholder {
+    color: var(--color-bone-dim);
+  }
+  .field-input:focus {
+    outline: none;
+    border-color: var(--color-neon-violet);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-neon-violet) 25%, transparent);
+  }
+}
+
+@layer utilities {
+  .rise-delay-1 { animation-delay: 0.12s; }
+  .rise-delay-2 { animation-delay: 0.26s; }
+  .rise-delay-3 { animation-delay: 0.4s; }
+  .rise-delay-4 { animation-delay: 0.55s; }
+  .rise-delay-5 { animation-delay: 0.7s; }
 }
 
 @media (prefers-reduced-motion: reduce) {

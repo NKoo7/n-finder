@@ -6,20 +6,27 @@ export function SiteFooter() {
     <footer className="mt-24 border-t border-line">
       <Container className="flex flex-col gap-6 py-10 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-sm">
-          <p className="font-display text-2xl text-bone">N-finder</p>
-          <p className="mt-1 text-sm text-bone-muted">Find your next obsession.</p>
+          <p className="text-aurora font-display text-2xl">N-Finder</p>
+          <p className="mt-1 text-sm text-bone-muted">Find your way into your taste.</p>
         </div>
         <div className="max-w-md text-sm leading-relaxed text-bone-dim">
           <p>
-            Early build. Features are added in stages and not every control is
-            connected yet.
+            Demo build: films, ratings and community profiles run on clearly
+            labeled sample data stored in your browser. Connect a licensed
+            metadata API and a real auth service for production.
           </p>
-          <nav aria-label="Footer" className="mt-4 flex gap-5">
+          <nav aria-label="Footer" className="mt-4 flex flex-wrap gap-5">
             <Link href="/discover" className="text-bone-muted hover:text-bone">
               Discover
             </Link>
+            <Link href="/people" className="text-bone-muted hover:text-bone">
+              Co-Stars
+            </Link>
             <Link href="/watchlist" className="text-bone-muted hover:text-bone">
-              Watchlist
+              Saved Movies
+            </Link>
+            <Link href="/profile" className="text-bone-muted hover:text-bone">
+              Profile
             </Link>
           </nav>
         </div>

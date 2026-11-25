@@ -1,4 +1,6 @@
+import type { CSSProperties } from "react";
 import type { MoodDimension } from "@/lib/mood-dimensions";
+import { DIMENSION_COLORS } from "@/lib/mood-colors";
 import { describePosition } from "@/lib/scoring/explain";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +27,7 @@ export function MoodDimensionRow({
   const inputId = `mood-${dimension.id}`;
   const descId = `${inputId}-desc`;
   const position = describePosition(dimension, value);
+  const color = DIMENSION_COLORS[dimension.id];
   return (
     <div className={cn("py-5 first:pt-0 last:pb-0", className)}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -34,11 +37,14 @@ export function MoodDimensionRow({
             &harr;
           </span>
           <span className="sr-only"> to </span>
-          {dimension.high}
+          <span className={color.text}>{dimension.high}</span>
         </label>
         <span
           aria-hidden="true"
-          className="ml-auto shrink-0 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-gold"
+          className={cn(
+            "ml-auto shrink-0 font-mono text-[0.68rem] uppercase tracking-[0.14em]",
+            color.text,
+          )}
         >
           {position} &middot; {value}
         </span>
@@ -53,9 +59,10 @@ export function MoodDimensionRow({
         onChange={(event) => onChange(Number(event.currentTarget.value))}
         aria-describedby={descId}
         aria-valuetext={`${position}, ${value} out of 100`}
-        className="mt-2 h-8 w-full cursor-pointer accent-gold"
+        className="mood-slider mt-3 w-full"
+        style={{ "--slider-a": color.from, "--slider-b": color.to } as CSSProperties}
       />
-      <p id={descId} className="mt-1 text-xs leading-relaxed text-bone-dim max-lg:sr-only">
+      <p id={descId} className="mt-2 text-xs leading-relaxed text-bone-dim max-lg:sr-only">
         {dimension.description}
       </p>
     </div>
